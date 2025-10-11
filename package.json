@@ -1,0 +1,22 @@
+{
+  "name": "04.api",
+  "version": "1.0.0",
+  "description": "api Rest",
+  "keywords": [
+    "first",
+    "api",
+    "Rest",
+    "api",
+    "mcp"
+  ],
+  "license": "MIT",
+  "author": "Fabian Dev",
+  "type": "commonjs",
+  "main": "api.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "5.1.0"
+  }
+}
