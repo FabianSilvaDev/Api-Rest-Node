@@ -3,8 +3,8 @@
 GET http://localhost:3312/movies
 
 ### Recover movies for id
-GET http://localhost:3312/movies/1
+GET http://localhost:3312/movies/c906673b-3948-4402-ac7f-73ac3a9e3105
 
 ### Recover all movis for gender
-GET http://localhost:3312/movies?gender=Horror
+GET http://localhost:3312/movies?gender=Action
 
