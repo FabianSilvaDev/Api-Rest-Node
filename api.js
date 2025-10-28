@@ -1,5 +1,4 @@
 const express = require('express');
-const crypo = require('node:crypto')
 const app = express()
 const movies = require('./movies.json');
 const { validateMovie, validatePartialMovie } = require('./validate.js')
@@ -61,6 +60,8 @@ app.post('/movies', (req, res) => {
     // 422 Unprocessable Entity
     return res.status(404).json({ error: JSON.parse(result.error.message) })
   }
+
+  // on data base , crated movie
   req.statusCode = 201
   console.log(req.statusCode)
   console.log('movie created')
@@ -68,7 +69,7 @@ app.post('/movies', (req, res) => {
   // en base de datos
   const newMovie = {
     id: crypto.randomUUID(), // uuid v4
-    ...result.data
+    ...result.data // ✖️ request.body
   }
 
   // Esto no sería REST, porque estamos guardando
@@ -77,6 +78,38 @@ app.post('/movies', (req, res) => {
 
   res.status(201).json(newMovie)
 })
+
+
+app.patch('/movies/:id', (req, res) => {
+    req.statusCode = 214
+    const result = validatePartialMovie(req.body)
+
+    if (!result.success) { //if the validation fails
+        // 422 Unprocessable Entity
+        return res.status(404).json({ error: JSON.parse(result.error.message) })
+    }
+
+    const { id } = req.params
+    const movieIndex = movies.findIndex(movie => movie.id === id) // mutate the id movie 
+
+    if (movieIndex === -1) {
+      return res.status(404).json({ error: 'Movie not found' })
+    }
+
+    const updatedMovie = {
+        ...movies[movieIndex], // existing movie properties
+        ...result.data // updated properties
+    }
+
+    movies[movieIndex] = updatedMovie
+
+    console.log(req.statusCode)
+    console.log('_______________')
+    console.log('movie updated')
+    return res.json(updatedMovie)
+
+    }
+)
 
 app.listen(PORT,()=>{
     console.log(`the server is get up in the port: http://localhost:${PORT}`)

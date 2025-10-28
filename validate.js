@@ -26,8 +26,10 @@ function validateMovie (input) {
 }
 
 function validatePartialMovie (input) {
-  return movieSchema.partial().safeParse(input)
+  return movieSchema.partial().safeParse(input) // with partial all property are optional
 }
+
+
 
 module.exports = {
   validateMovie,

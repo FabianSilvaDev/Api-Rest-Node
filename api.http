@@ -23,3 +23,12 @@ Content-Type: application/json
     "Drama"
   ]
 }
+
+
+### Update a movie
+PATCH  http://localhost:3312/movies/c20e4812-9737-4b51-9111-0d825e445ef4
+Content-Type: application/json
+
+{
+  "year":1990
+}
