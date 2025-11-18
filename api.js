@@ -21,6 +21,9 @@ app.get('/',(req,res)=>{
 })
 
 app.get('/movies',(req, res)=>{
+    res.header('Access-Control-Allow-Origin', '*') // CORS
+
+    
     req.statusCode = 200
     console.log(req.statusCode)
     console.log('Recover all movies')
@@ -79,7 +82,7 @@ app.post('/movies', (req, res) => {
   res.status(201).json(newMovie)
 })
 
-
+// patch for update
 app.patch('/movies/:id', (req, res) => {
     req.statusCode = 214
     const result = validatePartialMovie(req.body)

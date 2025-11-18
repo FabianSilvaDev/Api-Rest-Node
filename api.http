@@ -26,7 +26,9 @@ Content-Type: application/json
 
 
 ### Update a movie
-PATCH  http://localhost:3312/movies/c20e4812-9737-4b51-9111-0d825e445ef4
+# with the patch, to diference from put is that with the put, we can update partially a element, on the pacth is update all element.
+
+PATCH  http://localhost:3312/movies/05b4cc72-6092-4a12-8595-dd36919b9d06
 Content-Type: application/json
 
 {

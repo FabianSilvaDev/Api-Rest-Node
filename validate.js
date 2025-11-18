@@ -30,7 +30,6 @@ function validatePartialMovie (input) {
 }
 
 
-
 module.exports = {
   validateMovie,
   validatePartialMovie
