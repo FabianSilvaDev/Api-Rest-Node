@@ -1,59 +1,61 @@
-const express = require('express');
+import express, { json } from 'express' // require -> commonJS
+import { randomUUID } from 'node:crypto'
+import cors from 'cors'
+import { validateMovie, validatePartialMovie } from './validate.js'
+
+// it's a form of import for files in nodejs, it allows to import files us .json
+import { createRequire } from 'node:module'
+const require = createRequire(import.meta.url)
+const movies = require('./movies.json')
+
 const app = express()
-const movies = require('./movies.json');
-const { validateMovie, validatePartialMovie } = require('./validate.js')
+app.use(json())
+app.use(cors({
+  origin: (origin, callback) => {
+    const ACCEPTED_ORIGINS = [
+      'http://localhost:8080',
+      'http://localhost:3312',
+      'https://movies.com',
+      'https://midu.dev',
+      'http://127.0.0.1:8080'
+    ]
 
-
-const PORT = process.env.PORT ?? 3312;
-
-app.disable('x-powered-by') // desabilita el header x-powered-by
-
-// middleware
-app.use(express.json())
-
-// endpoints are path where there is a sourse
-
-app.get('/',(req,res)=>{
-    req.statusCode = 200
-    console.log(req.statusCode)
-    console.log('_________________')
-    res.json({message: 'Hello world'})
-})
-
-app.get('/movies',(req, res)=>{
-    res.header('Access-Control-Allow-Origin', '*') // CORS
-
-    
-    req.statusCode = 200
-    console.log(req.statusCode)
-    console.log('Recover all movies')
-    console.log('____________________')
-    res.json(movies)
-})
-
-app.get('/movies/:id/', (req,res)=>{ //path-to-regexp
-    const {id} = req.params
-    req.statusCode = 200
-    console.log(req.statusCode)
-    console.log('_______________')
-    // returns the value of the first element in the array that matches the provided test function.
-    const movie = movies.find(movie => movie.id === id)
-    if(movie) return res.json(movie)
-    res.status(404).json({message: 'Movie not found'})
-})
-
-app.get('/movies/:gender',(req,res)=>{
-    const {genre} = req.query
-    req.statusCode = 200
-    console.log(req.statusCode)
-    console.log('_______________')
-    if(genre){
-        const filteredMovies = movies.filter(
-            movie => movie.genre.some(g => g.toLowerCase() === genre.toLowerCase())
-        )
-        return res.json(filteredMovies)
+    if (ACCEPTED_ORIGINS.includes(origin)) {
+      return callback(null, true)
     }
-    res.status(404).json({message: 'Movie not found for that genre'})
+
+    if (!origin) {
+      return callback(null, true)
+    }
+
+    return callback(new Error('Not allowed by CORS'))
+  }
+}))
+app.disable('x-powered-by') // deshabilitar el header X-Powered-By: Express
+
+// métodos normales: GET/HEAD/POST
+// métodos complejos: PUT/PATCH/DELETE
+
+// CORS PRE-Flight
+// OPTIONS
+
+// Todos los recursos que sean MOVIES se identifica con /movies
+app.get('/movies', (req, res) => {
+  const { genre } = req.query
+  if (genre) {
+    const filteredMovies = movies.filter(
+      movie => movie.genre.some(g => g.toLowerCase() === genre.toLowerCase())
+    )
+    return res.json(filteredMovies)
+  }
+  res.json(movies)
+})
+
+app.get('/movies/:id', (req, res) => {
+  const { id } = req.params
+  const movie = movies.find(movie => movie.id === id)
+  if (movie) return res.json(movie)
+  res.status(404).json({ message: 'Movie not found' })
 })
 
 app.post('/movies', (req, res) => {
@@ -61,18 +63,13 @@ app.post('/movies', (req, res) => {
 
   if (!result.success) {
     // 422 Unprocessable Entity
-    return res.status(404).json({ error: JSON.parse(result.error.message) })
+    return res.status(400).json({ error: JSON.parse(result.error.message) })
   }
 
-  // on data base , crated movie
-  req.statusCode = 201
-  console.log(req.statusCode)
-  console.log('movie created')
-  console.log('_______________')
   // en base de datos
   const newMovie = {
-    id: crypto.randomUUID(), // uuid v4
-    ...result.data // ✖️ request.body
+    id: randomUUID(), // uuid v4
+    ...result.data
   }
 
   // Esto no sería REST, porque estamos guardando
@@ -82,38 +79,47 @@ app.post('/movies', (req, res) => {
   res.status(201).json(newMovie)
 })
 
-// patch for update
+app.delete('/movies/:id', (req, res) => {
+  const { id } = req.params
+  const movieIndex = movies.findIndex(movie => movie.id === id)
+
+  if (movieIndex === -1) {
+    return res.status(404).json({ message: 'Movie not found' })
+  }
+
+  movies.splice(movieIndex, 1)
+
+  return res.json({ message: 'Movie deleted' })
+})
+
 app.patch('/movies/:id', (req, res) => {
-    req.statusCode = 214
-    const result = validatePartialMovie(req.body)
+  const result = validatePartialMovie(req.body)
 
-    if (!result.success) { //if the validation fails
-        // 422 Unprocessable Entity
-        return res.status(404).json({ error: JSON.parse(result.error.message) })
-    }
+  if (!result.success) {
+    return res.status(400).json({ error: JSON.parse(result.error.message) })
+  }
 
-    const { id } = req.params
-    const movieIndex = movies.findIndex(movie => movie.id === id) // mutate the id movie 
+  const { id } = req.params
+  const movieIndex = movies.findIndex(movie => movie.id === id)
 
-    if (movieIndex === -1) {
-      return res.status(404).json({ error: 'Movie not found' })
-    }
+  if (movieIndex === -1) {
+    return res.status(404).json({ message: 'Movie not found' })
+  }
 
-    const updatedMovie = {
-        ...movies[movieIndex], // existing movie properties
-        ...result.data // updated properties
-    }
+  const updateMovie = {
+    ...movies[movieIndex],
+    ...result.data
+  }
 
-    movies[movieIndex] = updatedMovie
+  movies[movieIndex] = updateMovie
 
-    console.log(req.statusCode)
-    console.log('_______________')
-    console.log('movie updated')
-    return res.json(updatedMovie)
+  return res.json(updateMovie)
+})
+console.log("ENV PORT:", process.env.PORT)
 
-    }
-)
+const PORT = process.env.PORT ?? 3312
 
-app.listen(PORT,()=>{
-    console.log(`the server is get up in the port: http://localhost:${PORT}`)
+app.listen(PORT, () => {
+  // console.log("ENV PORT:", process.env.PORT)
+  console.log(`server listening on port http://localhost:${PORT}`)
 })
